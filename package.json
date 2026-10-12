@@ -1,0 +1,33 @@
+{
+  "name": "taixiu-vip-v3",
+  "version": "3.0.0",
+  "description": "API dự đoán Tài Xỉu — Dice Rules + Streak + Ensemble AI (S/A/B/C tiers)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "taixiu",
+    "prediction",
+    "ai",
+    "ensemble",
+    "fastify",
+    "api",
+    "sunwin",
+    "lc79",
+    "hitclub",
+    "max789"
+  ],
+  "author": "cskhgiabao",
+  "license": "MIT",
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "@fastify/cors": "^9.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

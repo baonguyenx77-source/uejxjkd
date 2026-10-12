@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 AI Tài Xỉu - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #e2e8f0;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            text-align: center;
+            padding: 20px 16px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border: 1px solid #1e40af;
+            box-shadow: 0 4px 20px rgba(30, 64, 175, 0.2);
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+        .header .sub {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .header .status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 12px;
+            background: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        /* ===== GAME TABS ===== */
+        .game-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+        }
+        .game-tabs::-webkit-scrollbar { height: 4px; }
+        .game-tabs::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+        .game-tab {
+            flex-shrink: 0;
+            padding: 10px 18px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .game-tab:hover {
+            background: #293548;
+            border-color: #475569;
+        }
+        .game-tab.active {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: #fff;
+            border-color: #60a5fa;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+        }
+
+        /* ===== PREDICTION CARD (PHIÊN HIỆN TẠI) ===== */
+        .prediction-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 640px) {
+            .prediction-card { grid-template-columns: 1fr; }
+        }
+
+        .pred-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .pred-col-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .pred-col-main {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        .pred-col-main.tai { color: #f87171; }
+        .pred-col-main.xiu { color: #38bdf8; }
+        .pred-col-main.waiting { color: #fbbf24; font-size: 20px; }
+
+        .pred-info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .pred-info-row .label { color: #64748b; min-width: 90px; }
+        .pred-info-row .value { color: #e2e8f0; font-weight: 600; }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .confidence-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.4s;
+        }
+        .confidence-bar .fill.high { background: linear-gradient(90deg, #10b981, #4ade80); }
+        .confidence-bar .fill.mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .confidence-bar .fill.low { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        .li-do-box {
+            background: #0f172a;
+            border-left: 3px solid #3b82f6;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        /* ===== STATS MINI ===== */
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .stat-mini {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+        .stat-mini .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .stat-mini .value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .value.green { color: #4ade80; }
+        .value.red { color: #f87171; }
+        .value.blue { color: #38bdf8; }
+        .value.yellow { color: #fbbf24; }
+
+        /* ===== HISTORY TABLE ===== */
+        .history-container {
+            background: #0f172a;
+            border-radius: 14px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+        .history-header {
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-header h2 {
+            font-size: 16px;
+            color: #38bdf8;
+            font-weight: 700;
+        }
+        .history-header .count {
+            font-size: 12px;
+            color: #64748b;
+            background: #1e293b;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        table.history {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table.history thead {
+            background: #111827;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        table.history th {
+            text-align: left;
+            padding: 12px 14px;
+            color: #94a3b8;
+            font-weight: 600;
+            border-bottom: 1px solid #334155;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        table.history td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #1a2332;
+            vertical-align: middle;
+        }
+        table.history tbody tr {
+            transition: background 0.15s;
+        }
+        table.history tbody tr:hover {
+            background: #1a2332;
+        }
+
+        .session-id {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .session-id strong { color: #cbd5e1; }
+
+        .dice-cell {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+        .dice-cell .total {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .badge-pred, .badge-result {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .badge-tai {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+        .badge-xiu {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+        .badge-none {
+            background: rgba(100, 116, 139, 0.1);
+            color: #64748b;
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .pattern-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #7c2d12, #9a3412);
+            color: #fdba74;
+            border: 1px solid #b45309;
+            white-space: nowrap;
+        }
+        .pattern-badge.theo {
+            background: linear-gradient(135deg, #064e3b, #065f46);
+            color: #6ee7b7;
+            border-color: #059669;
+        }
+        .pattern-badge.unknown {
+            background: #1e293b;
+            color: #64748b;
+            border-color: #334155;
+        }
+
+        .badge-correct {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(74, 222, 128, 0.12);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            text-transform: uppercase;
+        }
+        .badge-wrong {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(248, 113, 113, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            text-transform: uppercase;
+        }
+        .badge-pending {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(251, 191, 36, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            text-transform: uppercase;
+        }
+
+        .confidence-mini {
+            display: inline-block;
+            width: 36px;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 2px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+        .confidence-mini .fill {
+            height: 100%;
+            background: #3b82f6;
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        .spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #1e293b;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #475569;
+            font-size: 12px;
+        }
+        .footer .dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 20px; }
+            .pred-col-main { font-size: 24px; }
+            table.history { font-size: 11px; }
+            table.history th, table.history td { padding: 8px 6px; }
+            .dice-cell { font-size: 10px; }
+            .pattern-badge { font-size: 9px; padding: 3px 6px; }
+            .session-id { font-size: 10px; }
+            .badge-pred, .badge-result { font-size: 10px; padding: 3px 8px; }
+            .badge-correct, .badge-wrong, .badge-pending { font-size: 9px; padding: 3px 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <div class="header">
+        <h1>🎲 AI TÀI XỈU PRO</h1>
+        <div class="sub">Hệ thống dự đoán đa thuật toán — Tầng S/A/B/C</div>
+        <div class="status">
+            <span class="dot"></span>
+            <span id="statusText">Đang kết nối...</span>
+        </div>
+    </div>
+
+    <!-- ===== GAME TABS ===== -->
+    <div class="game-tabs" id="gameTabs"></div>
+
+    <!-- ===== PREDICTION CARD ===== -->
+    <div class="prediction-card" id="predictionCard">
+        <div class="pred-col">
+            <div class="pred-col-label">🎯 Phiên hiện tại</div>
+            <div class="pred-col-main waiting" id="currentSession">#--------</div>
+            <div class="pred-info-row">
+                <span class="label">Kết quả phiên trước:</span>
+                <span class="value" id="lastResult">--</span>
+            </div>
+            <div class="pred-info-row">
+                <span class="label">Xúc xắc:</span>
+                <span class="value" id="lastDice">--</span>
+            </div>
+        </div>
+        <div class="pred-col">
+            <div class="pred-col-label">🔮 Dự đoán</div>
+            <div class="pred-col-main waiting" id="predictionText">Đang chờ...</div>
+            <div class="pred-info-row">
+                <span class="label">Độ tin cậy:</span>
+                <span class="value" id="confidenceText">--</span>
+            </div>
+            <div class="confidence-bar">
+                <div class="fill" id="confidenceFill" style="width: 0%"></div>
+            </div>
+            <div class="li-do-box" id="liDoBox">Chưa có dữ liệu phân tích...</div>
+        </div>
+    </div>
+
+    <!-- ===== STATS MINI ===== -->
+    <div class="stats-mini" id="statsMini">
+        <div class="stat-mini">
+            <div class="label">Tổng dự đoán</div>
+            <div class="value blue" id="statTotal">0</div>
+        </div>
+        <div class="stat-mini">
+            <div class="label">Đúng</div>
+            <div class="value green" id="statCorrect">0</div>
+        </div>
+        <div class="stat-mini">
+            <div class="label">Sai</div>
+            <div class="value red" id="statWrong">0</div>
+        </div>
+        <div class="stat-mini">
+            <div class="label">Tỷ lệ</div>
+            <div class="value yellow" id="statAccuracy">0%</div>
+        </div>
+        <div class="stat-mini">
+            <div class="label">Chuỗi thắng</div>
+            <div class="value green" id="statWinStreak">0</div>
+        </div>
+        <div class="stat-mini">
+            <div class="label">Chuỗi thua</div>
+            <div class="value red" id="statLoseStreak">0</div>
+        </div>
+    </div>
+
+    <!-- ===== HISTORY TABLE ===== -->
+    <div class="history-container">
+        <div class="history-header">
+            <h2>📊 Lịch sử dự đoán</h2>
+            <span class="count" id="historyCount">0 phiên</span>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="history">
+                <thead>
+                    <tr>
+                        <th>Phiên</th>
+                        <th>Xúc xắc / Điểm</th>
+                        <th>Dự đoán trước</th>
+                        <th>Kết quả thực</th>
+                        <th>Loại cầu</th>
+                        <th>Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr>
+                        <td colspan="6">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <div>Đang tải dữ liệu...</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <div class="footer">
+        <span class="dot"></span>
+        Tự động cập nhật mỗi 5 giây · Lần refresh: <span id="refreshCount">0</span> · <span id="lastUpdate">--:--:--</span>
+    </div>
+
+    <script>
+        // ========== STATE ==========
+        let currentGame = 'sunwin';
+        let refreshCount = 0;
+        let isLoading = false;
+
+        const GAMES = [
+            { key: 'sunwin', label: '🎰 Sunwin' },
+            { key: 'lc79_md5', label: '🎲 LC79 MD5' },
+            { key: 'lc79_hu', label: '🎲 LC79 Hũ' },
+            { key: 'hitclub_md5', label: '🎯 HitClub MD5' },
+            { key: 'hitclub_hu', label: '🎯 HitClub Hũ' },
+            { key: 'max789_md5', label: '💎 Max789 MD5' },
+            { key: 'max789_hu', label: '💎 Max789 Hũ' },
+        ];
+
+        // ========== RENDER GAME TABS ==========
+        function renderTabs() {
+            const tabs = document.getElementById('gameTabs');
+            tabs.innerHTML = GAMES.map(g => `
+                <div class="game-tab ${g.key === currentGame ? 'active' : ''}" data-key="${g.key}">
+                    ${g.label}
+                </div>
+            `).join('');
+
+            tabs.querySelectorAll('.game-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentGame = tab.dataset.key;
+                    renderTabs();
+                    loadGame();
+                });
+            });
+        }
+
+        // ========== UTILS ==========
+        function formatDice(dice) {
+            if (!dice || !Array.isArray(dice)) return '--';
+            return `[${dice.join(', ')}]`;
+        }
+
+        function getPatternClass(pattern) {
+            if (!pattern) return 'unknown';
+            if (pattern.includes('cycle') || pattern.includes('loop') || pattern.includes('growth')) return 'theo';
+            return '';
+        }
+
+        function getPatternLabel(pattern) {
+            if (!pattern || pattern === 'unknown' || pattern === 'random_pattern') {
+                return 'NGẪU NHIÊN';
+            }
+            const map = {
+                'cycle_3_1_pattern': 'BẺ CẦU · Cầu 3-1',
+                'cycle_1_3_pattern': 'THEO CẦU · Cầu 1-3',
+                'cycle_4_1_pattern': 'BẺ CẦU · Cầu 4-1',
+                'cycle_1_4_pattern': 'THEO CẦU · Cầu 1-4',
+                'cycle_2_3_2_pattern': 'THEO CẦU · Cầu 2-3-2',
+                'cycle_3_2_3_pattern': 'BẺ CẦU · Cầu 3-2-3',
+                'loop_2211_short': 'BẺ CẦU · Cầu 2-2',
+                'loop_1122_short': 'THEO CẦU · Cầu 2-2',
+                '1_1_pattern': 'THEO CẦU · Cầu 1-1',
+                '2_2_pattern': 'THEO CẦU · Cầu 2-2',
+                '3_3_pattern': 'BẺ CẦU · Cầu 3-3',
+                '4_4_pattern': 'BẺ CẦU · Cầu 4-4',
+                'triple_1_pattern': 'BẺ CẦU · Cầu Đôi TT',
+                'triple_2_pattern': 'BẺ CẦU · Cầu Đôi XX',
+                'pyramid_12321_pattern': 'THEO CẦU · Cầu Thang Lên',
+                'pyramid_32123_pattern': 'BẺ CẦU · Cầu Thang Lùi',
+                'growth_123_pattern': 'THEO CẦU · Cầu Thang Lên',
+                'growth_321_pattern': 'BẺ CẦU · Cầu Thang Lùi',
+                'double_streak_flip': 'BẺ CẦU · Cầu Đôi',
+                '1_2_1_pattern': 'THEO CẦU · Cầu 1-2-1',
+                '2_1_2_pattern': 'BẺ CẦU · Cầu 2-1-2',
+                '3_2_3_pattern': 'BẺ CẦU · Cầu 3-2-3',
+                '1_3_1_pattern': 'THEO CẦU · Cầu 1-3-1',
+                'short_run_pattern': 'THEO CẦU · Bệt ngắn',
+                'medium_run_pattern': 'THEO CẦU · Bệt vừa',
+                'long_run_pattern': 'BẺ CẦU · Bệt dài',
+                'sunwin_prng_pattern': 'THEO CẦU · Khóa Hạt PRNG',
+                'sunwin_key_lock_pattern': 'THEO CẦU · Khóa Hạt',
+                'sunwin_repeating_pattern': 'THEO CẦU · Cầu 1-1',
+            };
+            return map[pattern] || pattern.replace(/_/g, ' ').toUpperCase();
+        }
+
+        function getConfidenceClass(conf) {
+            if (conf >= 70) return 'high';
+            if (conf >= 55) return 'mid';
+            return 'low';
+        }
+
+        // ========== LOAD GAME DATA ==========
+        async function loadGame() {
+            if (isLoading) return;
+            isLoading = true;
+
+            try {
+                const [predRes, statsRes, historyRes] = await Promise.all([
+                    fetch(`/api/${currentGame}`),
+                    fetch(`/api/stats`),
+                    fetch(`/api/${currentGame}/history`)
+                ]);
+
+                const pred = await predRes.json();
+                const statsAll = await statsRes.json();
+                const history = await historyRes.json();
+
+                renderPrediction(pred);
+                renderStats(statsAll[currentGame] || {});
+                renderHistory(history);
+
+                document.getElementById('statusText').textContent = 'Đang hoạt động';
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('vi-VN');
+                refreshCount++;
+                document.getElementById('refreshCount').textContent = refreshCount;
+
+            } catch (e) {
+                console.error('Lỗi load:', e);
+                document.getElementById('statusText').textContent = 'Lỗi kết nối';
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // ========== RENDER PREDICTION ==========
+        function renderPrediction(pred) {
+            const sessionEl = document.getElementById('currentSession');
+            const predEl = document.getElementById('predictionText');
+            const confEl = document.getElementById('confidenceText');
+            const fillEl = document.getElementById('confidenceFill');
+            const liDoEl = document.getElementById('liDoBox');
+
+            if (pred.phien_nay) {
+                sessionEl.textContent = `#${pred.phien_nay}`;
+                sessionEl.className = 'pred-col-main';
+            } else {
+                sessionEl.textContent = '#--------';
+                sessionEl.className = 'pred-col-main waiting';
+            }
+
+            document.getElementById('lastResult').textContent = pred.ket_qua || '--';
+            document.getElementById('lastDice').textContent =
+                pred.xuc_xac ? `${formatDice(pred.xuc_xac)} (${pred.xuc_xac.reduce((a, b) => a + b, 0)}đ)` : '--';
+
+            const duDoan = (pred.du_doan || '').toLowerCase();
+            if (duDoan === 'tài' || duDoan === 'tai') {
+                predEl.textContent = '🔴 TÀI';
+                predEl.className = 'pred-col-main tai';
+            } else if (duDoan === 'xỉu' || duDoan === 'xiu') {
+                predEl.textContent = '🔵 XỈU';
+                predEl.className = 'pred-col-main xiu';
+            } else {
+                predEl.textContent = '⏳ Đang chờ...';
+                predEl.className = 'pred-col-main waiting';
+            }
+
+            const conf = parseInt(pred.do_tin_cay) || 0;
+            confEl.textContent = `${conf}%`;
+            fillEl.style.width = `${conf}%`;
+            fillEl.className = `fill ${getConfidenceClass(conf)}`;
+
+            liDoEl.textContent = pred.li_do || 'Chưa có dữ liệu phân tích...';
+        }
+
+        // ========== RENDER STATS ==========
+        function renderStats(s) {
+            document.getElementById('statTotal').textContent = s.totalPredictions || 0;
+            document.getElementById('statCorrect').textContent = s.correct || 0;
+            document.getElementById('statWrong').textContent = s.wrong || 0;
+            document.getElementById('statAccuracy').textContent = s.accuracy || '0%';
+            document.getElementById('statWinStreak').textContent = s.winStreak || 0;
+            document.getElementById('statLoseStreak').textContent = s.loseStreak || 0;
+        }
+
+        // ========== RENDER HISTORY ==========
+        function renderHistory(history) {
+            const tbody = document.getElementById('historyBody');
+            const countEl = document.getElementById('historyCount');
+
+            if (!history || history.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="loading">Chưa có dữ liệu lịch sử</div>
+                        </td>
+                    </tr>
+                `;
+                countEl.textContent = '0 phiên';
+                return;
+            }
+
+            countEl.textContent = `${history.length} phiên`;
+
+            tbody.innerHTML = history.map(item => {
+                const predText = item.prediction
+                    ? item.prediction.toUpperCase()
+                    : '--';
+                const predClass = item.prediction === 'tài' ? 'badge-tai'
+                    : item.prediction === 'xỉu' ? 'badge-xiu'
+                    : 'badge-none';
+
+                const resultText = item.tx_label
+                    ? item.tx_label.toUpperCase()
+                    : '--';
+                const resultClass = item.tx_label === 'tài' ? 'badge-tai'
+                    : item.tx_label === 'xỉu' ? 'badge-xiu'
+                    : 'badge-none';
+
+                const diceStr = item.dice ? formatDice(item.dice) : '--';
+                const totalStr = item.total || '--';
+
+                const patternClass = getPatternClass(item.pattern);
+                const patternLabel = getPatternLabel(item.pattern);
+
+                let judgeHTML = '';
+                if (item.correct === 'đúng✅' || item.correct === true) {
+                    judgeHTML = '<span class="badge-correct">✅ THẮNG</span>';
+                } else if (item.correct === 'sai❌' || item.correct === false) {
+                    judgeHTML = '<span class="badge-wrong">❌ THUA</span>';
+                } else {
+                    judgeHTML = '<span class="badge-pending">⏳ CHỜ</span>';
+                }
+
+                const confMini = item.prediction_confidence
+                    ? `<div class="confidence-mini"><div class="fill" style="width: ${item.prediction_confidence}%"></div></div>`
+                    : '';
+
+                return `
+                    <tr>
+                        <td><span class="session-id">#<strong>${item.session}</strong></span></td>
+                        <td>
+                            <div class="dice-cell">
+                                ${diceStr}
+                                <div class="total">(${totalStr}đ)</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-pred ${predClass}">${predText}</span>
+                            ${confMini}
+                        </td>
+                        <td><span class="badge-result ${resultClass}">${resultText}</span></td>
+                        <td>
+                            <span class="pattern-badge ${patternClass}">
+                                ${patternLabel}
+                            </span>
+                        </td>
+                        <td>${judgeHTML}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ========== INIT ==========
+        renderTabs();
+        loadGame();
+        setInterval(loadGame, 5000);
+    </script>
+
+</body>
+</html>
